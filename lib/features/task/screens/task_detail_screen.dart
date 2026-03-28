@@ -83,12 +83,13 @@ class TaskDetailScreen extends StatelessWidget {
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.camera_alt),
                 label: const Text('Start AR Task'),
-                style:
-                    ElevatedButton.styleFrom(backgroundColor: color),
+                style: ElevatedButton.styleFrom(backgroundColor: color),
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Camera module coming soon!')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CameraScreen(task: task),
+                    ),
                   );
                 },
               ),
@@ -110,8 +111,7 @@ class _InfoChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: color.withOpacity(0.08),
         borderRadius: BorderRadius.circular(20),

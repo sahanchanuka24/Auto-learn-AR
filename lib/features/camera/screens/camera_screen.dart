@@ -27,6 +27,9 @@ class _CameraScreenState extends State<CameraScreen> {
   final MLDetectionService _mlService = MLDetectionService();
   final List<bool> _completedSteps = [];
 
+  // Time tracking
+  final Stopwatch _stopwatch = Stopwatch();
+
   String? _detectedLabel;
   String _detectedComponent = '';
   double _detectedConfidence = 0.0;
@@ -41,6 +44,7 @@ class _CameraScreenState extends State<CameraScreen> {
     super.initState();
     _completedSteps
         .addAll(List.generate(_steps.length, (_) => false));
+    _stopwatch.start();
     _initAll();
   }
 
@@ -101,9 +105,7 @@ class _CameraScreenState extends State<CameraScreen> {
 
     try {
       final result = await _mlService.detectFromCameraImage(
-        image,
-        0,
-      );
+        image, 0);
 
       if (mounted && result != null) {
         final matched = result.component ==
@@ -119,10 +121,8 @@ class _CameraScreenState extends State<CameraScreen> {
 
         if (matched && !_firstMatchSpoken) {
           _firstMatchSpoken = true;
-          _speak(
-            '${widget.task["title"]} detected. '
-            'Step 1: ${_steps[0]}',
-          );
+          _speak('${widget.task["title"]} detected. '
+              'Step 1: ${_steps[0]}');
         }
       }
     } catch (_) {}
@@ -140,7 +140,8 @@ class _CameraScreenState extends State<CameraScreen> {
       });
       _speak('Step ${_currentStep + 1}: ${_steps[_currentStep]}');
     } else {
-      _speak('Task complete! Well done.');
+      _stopwatch.stop();
+      _speak('Excellent! Task complete!');
       _showCompletionDialog();
     }
   }
@@ -158,18 +159,47 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   void _showCompletionDialog() {
+    final completedCount = _completedSteps.where((c) => c).length;
+    final score = ((completedCount / _steps.length) * 100).toInt();
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        title: const Row(children: [
-          Icon(Icons.check_circle, color: AppTheme.success),
-          SizedBox(width: 8),
-          Text('Task Complete!'),
-        ]),
-        content: Text(
-          'You completed all ${_steps.length} steps for '
-          '${widget.task["title"]}.',
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 70, height: 70,
+              decoration: BoxDecoration(
+                color: AppTheme.success.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.check_circle,
+                  color: AppTheme.success, size: 40),
+            ),
+            const SizedBox(height: 16),
+            const Text('Task Complete!',
+                style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text('Score: $score%',
+                style: TextStyle(
+                    fontSize: 16,
+                    color: score >= 80
+                        ? AppTheme.success
+                        : AppTheme.accent,
+                    fontWeight: FontWeight.w600)),
+            const SizedBox(height: 4),
+            Text(
+              '$completedCount of ${_steps.length} steps completed',
+              style: const TextStyle(
+                  color: AppTheme.textSecondary, fontSize: 13),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -188,8 +218,9 @@ class _CameraScreenState extends State<CameraScreen> {
                   builder: (_) => EvaluationScreen(
                     task: widget.task,
                     totalSteps: _steps.length,
-                    completedSteps:
-                        _completedSteps.where((c) => c).length,
+                    completedSteps: completedCount,
+                    timeTakenSeconds:
+                        _stopwatch.elapsed.inSeconds,
                   ),
                 ),
               );
@@ -204,6 +235,7 @@ class _CameraScreenState extends State<CameraScreen> {
   @override
   void dispose() {
     _tts.stop();
+    _stopwatch.stop();
     _controller?.stopImageStream();
     _controller?.dispose();
     _mlService.dispose();
@@ -263,7 +295,6 @@ class _CameraScreenState extends State<CameraScreen> {
   Widget _buildCameraView(Color taskColor) {
     return Stack(
       children: [
-        // Camera feed
         Positioned.fill(child: CameraPreview(_controller!)),
 
         // Top bar
@@ -318,28 +349,37 @@ class _CameraScreenState extends State<CameraScreen> {
                     ],
                   ),
                 ),
-                // AI status
+
+                // Timer display
                 Container(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: _modelLoaded
-                        ? Colors.green.withOpacity(0.3)
-                        : Colors.orange.withOpacity(0.3),
+                    color: Colors.black45,
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Text(
-                    _modelLoaded ? 'AI ON' : 'Loading...',
-                    style: TextStyle(
-                      color: _modelLoaded
-                          ? Colors.greenAccent
-                          : Colors.orange,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  child: StreamBuilder(
+                    stream: Stream.periodic(
+                        const Duration(seconds: 1)),
+                    builder: (context, _) {
+                      final elapsed = _stopwatch.elapsed;
+                      final mins = elapsed.inMinutes
+                          .toString()
+                          .padLeft(2, '0');
+                      final secs = (elapsed.inSeconds % 60)
+                          .toString()
+                          .padLeft(2, '0');
+                      return Text('$mins:$secs',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold));
+                    },
                   ),
                 ),
                 const SizedBox(width: 8),
+
+                // Audio toggle
                 GestureDetector(
                   onTap: _toggleAudio,
                   child: Container(
@@ -359,6 +399,8 @@ class _CameraScreenState extends State<CameraScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
+
+                // Step counter
                 Container(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 10, vertical: 5),
@@ -445,9 +487,7 @@ class _CameraScreenState extends State<CameraScreen> {
               children: [
                 ..._buildCorners(
                   _componentMatched
-                      ? AppTheme.success
-                      : taskColor,
-                ),
+                      ? AppTheme.success : taskColor),
                 Center(
                   child: Container(
                     padding: const EdgeInsets.symmetric(
@@ -491,8 +531,8 @@ class _CameraScreenState extends State<CameraScreen> {
                           ? taskColor
                           : Colors.black45,
                   border: Border.all(
-                    color:
-                        isCurrent ? taskColor : Colors.white24,
+                    color: isCurrent
+                        ? taskColor : Colors.white24,
                     width: 1.5,
                   ),
                 ),

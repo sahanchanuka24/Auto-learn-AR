@@ -1,0 +1,54 @@
+{
+  "air_filter": [
+    "AF_01_locate_filter_box",
+    "AF_02_unclip_housing",
+    "AF_03_lift_housing_cover",
+    "AF_04_remove_filter",
+    "AF_05_inspect_filter",
+    "AF_06_tap_filter",
+    "AF_07_insert_filter",
+    "AF_08_clip_housing"
+  ],
+  "spark_plug": [
+    "SP_01_locate_plug_wire",
+    "SP_02_remove_wire",
+    "SP_03_place_wrench",
+    "SP_04_unscrew_plug",
+    "SP_05_remove_plug",
+    "SP_06_measure_gap",
+    "SP_07_adjust_gap",
+    "SP_08_insert_plug",
+    "SP_09_reconnect_wire"
+  ],
+  "battery": [
+    "BA_01_locate_battery",
+    "BA_02_loosen_negative",
+    "BA_03_remove_negative",
+    "BA_04_loosen_positive",
+    "BA_05_remove_positive",
+    "BA_06_inspect_terminals",
+    "BA_07_clean_terminals",
+    "BA_08_reconnect_positive",
+    "BA_09_reconnect_negative",
+    "BA_10_check_voltage"
+  ],
+  "engine_oil": [
+    "EO_01_locate_dipstick",
+    "EO_02_pull_dipstick",
+    "EO_03_wipe_dipstick",
+    "EO_04_reinsert_dipstick",
+    "EO_05_pull_again",
+    "EO_06_read_level",
+    "EO_07_check_minmax",
+    "EO_08_add_oil"
+  ],
+  "coolant": [
+    "CO_01_locate_reservoir",
+    "CO_02_check_level",
+    "CO_03_identify_low",
+    "CO_04_open_cap",
+    "CO_05_pour_coolant",
+    "CO_06_close_cap",
+    "CO_07_verify_level"
+  ]
+}

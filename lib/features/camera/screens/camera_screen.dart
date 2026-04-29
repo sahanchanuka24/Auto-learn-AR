@@ -4,6 +4,8 @@ import 'package:flutter_tts/flutter_tts.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/services/ml_detection_service.dart';
+import '../../../data/services/action_recognition_service.dart';
+import '../../../data/services/hand_keypoint_service.dart';
 import '../../evaluation/screens/evaluation_screen.dart';
 
 class CameraScreen extends StatefulWidget {
@@ -21,19 +23,29 @@ class _CameraScreenState extends State<CameraScreen> {
   int _currentStep = 0;
   bool _audioEnabled = true;
   bool _isDetecting = false;
-  bool _modelLoaded = false;
 
+  // Services
   final FlutterTts _tts = FlutterTts();
   final MLDetectionService _mlService = MLDetectionService();
-  final List<bool> _completedSteps = [];
+  final ActionRecognitionService _actionService =
+      ActionRecognitionService();
+  final HandKeypointService _handService = HandKeypointService();
 
-  // Time tracking
+  // State
+  bool _modelLoaded = false;
+  bool _actionModelLoaded = false;
+  final List<bool> _completedSteps = [];
   final Stopwatch _stopwatch = Stopwatch();
 
+  // Detection results
   String? _detectedLabel;
-  String _detectedComponent = '';
   double _detectedConfidence = 0.0;
   bool _componentMatched = false;
+
+  // Action recognition results
+  String? _currentAction;
+  int _recognizedStepNumber = 0;
+  double _actionConfidence = 0.0;
   bool _firstMatchSpoken = false;
 
   List<String> get _steps =>
@@ -50,8 +62,19 @@ class _CameraScreenState extends State<CameraScreen> {
 
   Future<void> _initAll() async {
     await _initTts();
-    final loaded = await _mlService.loadModel();
-    if (mounted) setState(() => _modelLoaded = loaded);
+
+    // Load both ML models
+    final m1 = await _mlService.loadModel();
+    final m2 = await _actionService.loadModel();
+    await _handService.initialize();
+
+    if (mounted) {
+      setState(() {
+        _modelLoaded = m1;
+        _actionModelLoaded = m2;
+      });
+    }
+
     await _initCamera();
   }
 
@@ -100,48 +123,94 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   void _processFrame(CameraImage image) async {
-    if (_isDetecting || !_modelLoaded) return;
+    if (_isDetecting) return;
     _isDetecting = true;
 
     try {
-      final result = await _mlService.detectFromCameraImage(
-        image, 0);
+      // Module 1: Component Detection
+      if (_modelLoaded) {
+        final result =
+            await _mlService.detectFromCameraImage(image, 0);
+        if (mounted && result != null) {
+          final matched = result.component ==
+                  widget.task['component'] &&
+              result.isReliable;
+          setState(() {
+            _detectedLabel = result.label;
+            _detectedConfidence = result.confidence;
+            _componentMatched = matched;
+          });
 
-      if (mounted && result != null) {
-        final matched = result.component ==
-                widget.task['component'] &&
-            result.isReliable;
+          if (matched && !_firstMatchSpoken) {
+            _firstMatchSpoken = true;
+            _speak(
+              '${widget.task["title"]} detected. '
+              'Step 1: ${_steps[0]}',
+            );
+          }
+        }
+      }
 
-        setState(() {
-          _detectedLabel = result.label;
-          _detectedComponent = result.component;
-          _detectedConfidence = result.confidence;
-          _componentMatched = matched;
-        });
+      // Module 2: Action Recognition
+      if (_actionModelLoaded) {
+        final keypoints =
+            await _handService.extractKeypoints(image);
 
-        if (matched && !_firstMatchSpoken) {
-          _firstMatchSpoken = true;
-          _speak('${widget.task["title"]} detected. '
-              'Step 1: ${_steps[0]}');
+        if (keypoints != null) {
+          _actionService.addFrame(keypoints);
+        } else {
+          _actionService.addEmptyFrame();
+        }
+
+        final actionResult = _actionService.recognizeAction(
+          widget.task['component'],
+        );
+
+        if (mounted && actionResult != null &&
+            actionResult.isReliable) {
+          setState(() {
+            _currentAction = actionResult.displayName;
+            _recognizedStepNumber = actionResult.stepNumber;
+            _actionConfidence = actionResult.confidence;
+          });
+
+          // Auto-advance step if action matches
+          if (actionResult.stepNumber == _currentStep + 1 &&
+              !_completedSteps[_currentStep]) {
+            _autoCompleteStep(actionResult.stepNumber - 1);
+          }
         }
       }
     } catch (_) {}
 
-    await Future.delayed(const Duration(milliseconds: 800));
+    await Future.delayed(const Duration(milliseconds: 500));
     _isDetecting = false;
+  }
+
+  void _autoCompleteStep(int stepIndex) {
+    if (stepIndex >= _steps.length) return;
+    setState(() => _completedSteps[stepIndex] = true);
+    _speak('Step ${stepIndex + 1} completed automatically!');
+
+    if (stepIndex < _steps.length - 1) {
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (mounted) {
+          setState(() => _currentStep = stepIndex + 1);
+          _speak('Step ${_currentStep + 1}: '
+              '${_steps[_currentStep]}');
+        }
+      });
+    }
   }
 
   void _nextStep() {
     setState(() => _completedSteps[_currentStep] = true);
     if (_currentStep < _steps.length - 1) {
-      setState(() {
-        _currentStep++;
-        _firstMatchSpoken = false;
-      });
+      setState(() => _currentStep++);
       _speak('Step ${_currentStep + 1}: ${_steps[_currentStep]}');
     } else {
       _stopwatch.stop();
-      _speak('Excellent! Task complete!');
+      _speak('Task complete! Well done.');
       _showCompletionDialog();
     }
   }
@@ -161,7 +230,6 @@ class _CameraScreenState extends State<CameraScreen> {
   void _showCompletionDialog() {
     final completedCount = _completedSteps.where((c) => c).length;
     final score = ((completedCount / _steps.length) * 100).toInt();
-
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -183,8 +251,7 @@ class _CameraScreenState extends State<CameraScreen> {
             const SizedBox(height: 16),
             const Text('Task Complete!',
                 style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold)),
+                    fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text('Score: $score%',
                 style: TextStyle(
@@ -193,12 +260,6 @@ class _CameraScreenState extends State<CameraScreen> {
                         ? AppTheme.success
                         : AppTheme.accent,
                     fontWeight: FontWeight.w600)),
-            const SizedBox(height: 4),
-            Text(
-              '$completedCount of ${_steps.length} steps completed',
-              style: const TextStyle(
-                  color: AppTheme.textSecondary, fontSize: 13),
-            ),
           ],
         ),
         actions: [
@@ -239,6 +300,8 @@ class _CameraScreenState extends State<CameraScreen> {
     _controller?.stopImageStream();
     _controller?.dispose();
     _mlService.dispose();
+    _actionService.dispose();
+    _handService.dispose();
     super.dispose();
   }
 
@@ -295,6 +358,7 @@ class _CameraScreenState extends State<CameraScreen> {
   Widget _buildCameraView(Color taskColor) {
     return Stack(
       children: [
+        // Camera feed
         Positioned.fill(child: CameraPreview(_controller!)),
 
         // Top bar
@@ -310,7 +374,7 @@ class _CameraScreenState extends State<CameraScreen> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withOpacity(0.8),
+                  Colors.black.withOpacity(0.85),
                   Colors.transparent,
                 ],
               ),
@@ -350,32 +414,21 @@ class _CameraScreenState extends State<CameraScreen> {
                   ),
                 ),
 
-                // Timer display
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.black45,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: StreamBuilder(
-                    stream: Stream.periodic(
-                        const Duration(seconds: 1)),
-                    builder: (context, _) {
-                      final elapsed = _stopwatch.elapsed;
-                      final mins = elapsed.inMinutes
-                          .toString()
-                          .padLeft(2, '0');
-                      final secs = (elapsed.inSeconds % 60)
-                          .toString()
-                          .padLeft(2, '0');
-                      return Text('$mins:$secs',
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold));
-                    },
-                  ),
+                // AI status indicators
+                Row(
+                  children: [
+                    _AiStatusBadge(
+                      label: 'M1',
+                      isOn: _modelLoaded,
+                      tooltip: 'Component Detection',
+                    ),
+                    const SizedBox(width: 4),
+                    _AiStatusBadge(
+                      label: 'M2',
+                      isOn: _actionModelLoaded,
+                      tooltip: 'Action Recognition',
+                    ),
+                  ],
                 ),
                 const SizedBox(width: 8),
 
@@ -409,7 +462,7 @@ class _CameraScreenState extends State<CameraScreen> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    'Step ${_currentStep + 1}/${_steps.length}',
+                    '${_currentStep + 1}/${_steps.length}',
                     style: const TextStyle(
                         color: Colors.white,
                         fontSize: 11,
@@ -421,51 +474,91 @@ class _CameraScreenState extends State<CameraScreen> {
           ),
         ),
 
-        // Detection badge
+        // Component detection badge
         Positioned(
           top: MediaQuery.of(context).padding.top + 75,
           left: 16, right: 16,
-          child: Center(
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: _componentMatched
-                    ? AppTheme.success.withOpacity(0.9)
-                    : Colors.black.withOpacity(0.65),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: _componentMatched
-                      ? AppTheme.success
-                      : Colors.white30,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    _componentMatched
-                        ? Icons.check_circle
-                        : Icons.search,
-                    color: Colors.white, size: 14,
-                  ),
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: Text(
-                      _detectedLabel != null
-                          ? '$_detectedLabel  '
-                              '${(_detectedConfidence * 100)
-                              .toStringAsFixed(0)}%'
-                          : 'Scanning...',
-                      style: const TextStyle(
-                          color: Colors.white, fontSize: 12),
-                      overflow: TextOverflow.ellipsis,
+          child: Column(
+            children: [
+              // Module 1 result
+              Center(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: _componentMatched
+                        ? AppTheme.success.withOpacity(0.9)
+                        : Colors.black.withOpacity(0.65),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: _componentMatched
+                          ? AppTheme.success
+                          : Colors.white30,
                     ),
                   ),
-                ],
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _componentMatched
+                            ? Icons.check_circle
+                            : Icons.search,
+                        color: Colors.white, size: 13,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        _detectedLabel != null
+                            ? 'M1: $_detectedLabel '
+                                '${(_detectedConfidence * 100).toStringAsFixed(0)}%'
+                            : 'M1: Scanning component...',
+                        style: const TextStyle(
+                            color: Colors.white, fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(height: 6),
+
+              // Module 2 result
+              if (_actionModelLoaded)
+                Center(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: _currentAction != null
+                          ? Colors.purple.withOpacity(0.8)
+                          : Colors.black.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: _currentAction != null
+                            ? Colors.purple
+                            : Colors.white24,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.gesture,
+                            color: Colors.white, size: 13),
+                        const SizedBox(width: 6),
+                        Text(
+                          _currentAction != null
+                              ? 'M2: ${_currentAction!} '
+                                  '${(_actionConfidence * 100).toStringAsFixed(0)}%'
+                              : 'M2: Watching actions...',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
 
@@ -512,7 +605,7 @@ class _CameraScreenState extends State<CameraScreen> {
           ),
         ),
 
-        // Step dots
+        // Step progress dots
         Positioned(
           top: MediaQuery.of(context).padding.top + 80,
           right: 12,
@@ -520,6 +613,7 @@ class _CameraScreenState extends State<CameraScreen> {
             children: List.generate(_steps.length, (i) {
               final isDone = _completedSteps[i];
               final isCurrent = i == _currentStep;
+              final isRecognized = _recognizedStepNumber == i + 1;
               return Container(
                 margin: const EdgeInsets.only(bottom: 5),
                 width: 26, height: 26,
@@ -527,12 +621,15 @@ class _CameraScreenState extends State<CameraScreen> {
                   shape: BoxShape.circle,
                   color: isDone
                       ? AppTheme.success
-                      : isCurrent
-                          ? taskColor
-                          : Colors.black45,
+                      : isRecognized
+                          ? Colors.purple
+                          : isCurrent
+                              ? taskColor
+                              : Colors.black45,
                   border: Border.all(
-                    color: isCurrent
-                        ? taskColor : Colors.white24,
+                    color: isCurrent || isRecognized
+                        ? (isRecognized ? Colors.purple : taskColor)
+                        : Colors.white24,
                     width: 1.5,
                   ),
                 ),
@@ -542,7 +639,7 @@ class _CameraScreenState extends State<CameraScreen> {
                           color: Colors.white, size: 13)
                       : Text('${i + 1}',
                           style: TextStyle(
-                            color: isCurrent
+                            color: isCurrent || isRecognized
                                 ? Colors.white
                                 : Colors.white38,
                             fontSize: 9,
@@ -560,8 +657,7 @@ class _CameraScreenState extends State<CameraScreen> {
           child: Container(
             padding: EdgeInsets.only(
               top: 16, left: 16, right: 16,
-              bottom:
-                  MediaQuery.of(context).padding.bottom + 16,
+              bottom: MediaQuery.of(context).padding.bottom + 16,
             ),
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -576,6 +672,7 @@ class _CameraScreenState extends State<CameraScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Progress bar
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
@@ -600,20 +697,27 @@ class _CameraScreenState extends State<CameraScreen> {
                       style: const TextStyle(
                           color: Colors.white60, fontSize: 11),
                     ),
-                    Text(
-                      '${((_completedSteps
-                                      .where((c) => c)
-                                      .length /
-                                  _steps.length) *
-                              100).toInt()}%',
-                      style: TextStyle(
-                          color: taskColor,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold),
+                    // Timer
+                    StreamBuilder(
+                      stream: Stream.periodic(
+                          const Duration(seconds: 1)),
+                      builder: (context, _) {
+                        final e = _stopwatch.elapsed;
+                        return Text(
+                          '${e.inMinutes.toString().padLeft(2, "0")}:'
+                          '${(e.inSeconds % 60).toString().padLeft(2, "0")}',
+                          style: TextStyle(
+                              color: taskColor,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold),
+                        );
+                      },
                     ),
                   ],
                 ),
                 const SizedBox(height: 10),
+
+                // Current step
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
@@ -626,13 +730,38 @@ class _CameraScreenState extends State<CameraScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Step ${_currentStep + 1} of '
-                        '${_steps.length}',
-                        style: TextStyle(
-                            color: taskColor,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600),
+                      Row(
+                        children: [
+                          Text(
+                            'Step ${_currentStep + 1} of '
+                            '${_steps.length}',
+                            style: TextStyle(
+                                color: taskColor,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600),
+                          ),
+                          if (_currentAction != null) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding:
+                                  const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.purple
+                                    .withOpacity(0.3),
+                                borderRadius:
+                                    BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                'AI detected action',
+                                style: const TextStyle(
+                                    color: Colors.purple,
+                                    fontSize: 9),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -646,6 +775,8 @@ class _CameraScreenState extends State<CameraScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
+
+                // Navigation buttons
                 Row(
                   children: [
                     if (_currentStep > 0) ...[
@@ -661,9 +792,8 @@ class _CameraScreenState extends State<CameraScreen> {
                             side: const BorderSide(
                                 color: Colors.white24),
                             shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(8),
-                            ),
+                                borderRadius:
+                                    BorderRadius.circular(8)),
                           ),
                           onPressed: _previousStep,
                         ),
@@ -687,9 +817,8 @@ class _CameraScreenState extends State<CameraScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: taskColor,
                           shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(8),
-                          ),
+                              borderRadius:
+                                  BorderRadius.circular(8)),
                         ),
                         onPressed: _nextStep,
                       ),
@@ -721,6 +850,48 @@ class _CameraScreenState extends State<CameraScreen> {
           child: _Corner(color: color, size: size,
               thickness: thickness, top: false, left: false)),
     ];
+  }
+}
+
+// AI Status Badge widget
+class _AiStatusBadge extends StatelessWidget {
+  final String label;
+  final bool isOn;
+  final String tooltip;
+
+  const _AiStatusBadge({
+    required this.label,
+    required this.isOn,
+    required this.tooltip,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+            horizontal: 6, vertical: 3),
+        decoration: BoxDecoration(
+          color: isOn
+              ? Colors.green.withOpacity(0.3)
+              : Colors.orange.withOpacity(0.3),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: isOn ? Colors.greenAccent : Colors.orange,
+            width: 0.5,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isOn ? Colors.greenAccent : Colors.orange,
+            fontSize: 9,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
   }
 }
 

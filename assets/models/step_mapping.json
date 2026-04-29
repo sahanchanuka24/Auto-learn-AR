@@ -1,0 +1,212 @@
+{
+  "AF_01_locate_filter_box": {
+    "component": "air_filter",
+    "step_number": 1,
+    "total_steps": 8
+  },
+  "AF_02_unclip_housing": {
+    "component": "air_filter",
+    "step_number": 2,
+    "total_steps": 8
+  },
+  "AF_03_lift_housing_cover": {
+    "component": "air_filter",
+    "step_number": 3,
+    "total_steps": 8
+  },
+  "AF_04_remove_filter": {
+    "component": "air_filter",
+    "step_number": 4,
+    "total_steps": 8
+  },
+  "AF_05_inspect_filter": {
+    "component": "air_filter",
+    "step_number": 5,
+    "total_steps": 8
+  },
+  "AF_06_tap_filter": {
+    "component": "air_filter",
+    "step_number": 6,
+    "total_steps": 8
+  },
+  "AF_07_insert_filter": {
+    "component": "air_filter",
+    "step_number": 7,
+    "total_steps": 8
+  },
+  "AF_08_clip_housing": {
+    "component": "air_filter",
+    "step_number": 8,
+    "total_steps": 8
+  },
+  "SP_01_locate_plug_wire": {
+    "component": "spark_plug",
+    "step_number": 1,
+    "total_steps": 9
+  },
+  "SP_02_remove_wire": {
+    "component": "spark_plug",
+    "step_number": 2,
+    "total_steps": 9
+  },
+  "SP_03_place_wrench": {
+    "component": "spark_plug",
+    "step_number": 3,
+    "total_steps": 9
+  },
+  "SP_04_unscrew_plug": {
+    "component": "spark_plug",
+    "step_number": 4,
+    "total_steps": 9
+  },
+  "SP_05_remove_plug": {
+    "component": "spark_plug",
+    "step_number": 5,
+    "total_steps": 9
+  },
+  "SP_06_measure_gap": {
+    "component": "spark_plug",
+    "step_number": 6,
+    "total_steps": 9
+  },
+  "SP_07_adjust_gap": {
+    "component": "spark_plug",
+    "step_number": 7,
+    "total_steps": 9
+  },
+  "SP_08_insert_plug": {
+    "component": "spark_plug",
+    "step_number": 8,
+    "total_steps": 9
+  },
+  "SP_09_reconnect_wire": {
+    "component": "spark_plug",
+    "step_number": 9,
+    "total_steps": 9
+  },
+  "BA_01_locate_battery": {
+    "component": "battery",
+    "step_number": 1,
+    "total_steps": 10
+  },
+  "BA_02_loosen_negative": {
+    "component": "battery",
+    "step_number": 2,
+    "total_steps": 10
+  },
+  "BA_03_remove_negative": {
+    "component": "battery",
+    "step_number": 3,
+    "total_steps": 10
+  },
+  "BA_04_loosen_positive": {
+    "component": "battery",
+    "step_number": 4,
+    "total_steps": 10
+  },
+  "BA_05_remove_positive": {
+    "component": "battery",
+    "step_number": 5,
+    "total_steps": 10
+  },
+  "BA_06_inspect_terminals": {
+    "component": "battery",
+    "step_number": 6,
+    "total_steps": 10
+  },
+  "BA_07_clean_terminals": {
+    "component": "battery",
+    "step_number": 7,
+    "total_steps": 10
+  },
+  "BA_08_reconnect_positive": {
+    "component": "battery",
+    "step_number": 8,
+    "total_steps": 10
+  },
+  "BA_09_reconnect_negative": {
+    "component": "battery",
+    "step_number": 9,
+    "total_steps": 10
+  },
+  "BA_10_check_voltage": {
+    "component": "battery",
+    "step_number": 10,
+    "total_steps": 10
+  },
+  "EO_01_locate_dipstick": {
+    "component": "engine_oil",
+    "step_number": 1,
+    "total_steps": 8
+  },
+  "EO_02_pull_dipstick": {
+    "component": "engine_oil",
+    "step_number": 2,
+    "total_steps": 8
+  },
+  "EO_03_wipe_dipstick": {
+    "component": "engine_oil",
+    "step_number": 3,
+    "total_steps": 8
+  },
+  "EO_04_reinsert_dipstick": {
+    "component": "engine_oil",
+    "step_number": 4,
+    "total_steps": 8
+  },
+  "EO_05_pull_again": {
+    "component": "engine_oil",
+    "step_number": 5,
+    "total_steps": 8
+  },
+  "EO_06_read_level": {
+    "component": "engine_oil",
+    "step_number": 6,
+    "total_steps": 8
+  },
+  "EO_07_check_minmax": {
+    "component": "engine_oil",
+    "step_number": 7,
+    "total_steps": 8
+  },
+  "EO_08_add_oil": {
+    "component": "engine_oil",
+    "step_number": 8,
+    "total_steps": 8
+  },
+  "CO_01_locate_reservoir": {
+    "component": "coolant",
+    "step_number": 1,
+    "total_steps": 7
+  },
+  "CO_02_check_level": {
+    "component": "coolant",
+    "step_number": 2,
+    "total_steps": 7
+  },
+  "CO_03_identify_low": {
+    "component": "coolant",
+    "step_number": 3,
+    "total_steps": 7
+  },
+  "CO_04_open_cap": {
+    "component": "coolant",
+    "step_number": 4,
+    "total_steps": 7
+  },
+  "CO_05_pour_coolant": {
+    "component": "coolant",
+    "step_number": 5,
+    "total_steps": 7
+  },
+  "CO_06_close_cap": {
+    "component": "coolant",
+    "step_number": 6,
+    "total_steps": 7
+  },
+  "CO_07_verify_level": {
+    "component": "coolant",
+    "step_number": 7,
+    "total_steps": 7
+  }
+}

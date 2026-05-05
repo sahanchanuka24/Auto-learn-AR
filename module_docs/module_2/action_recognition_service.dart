@@ -1,6 +1,16 @@
+import "package:flutter/foundation.dart";
+// ================================================================
+// MODULE 2: Student Task Recognition Based on Identified Component
+// Research Project: Automobile Learning System
+// Vehicle: Maruti Suzuki Alto 800L
+// ================================================================
+// Input:  Component ID from Module 1 + student action frames
+// Output: Task name + current step number
+// Technology: Conv1D TFLite + MediaPipe Hand Landmarks
+// ================================================================
+
 import 'dart:convert';
 import 'package:flutter/services.dart';
-import "package:flutter/foundation.dart";
 import 'package:tflite_flutter/tflite_flutter.dart';
 
 class ActionRecognitionService {
@@ -15,78 +25,64 @@ class ActionRecognitionService {
   // Sequence buffer — stores last 30 frames
   final List<List<double>> _frameBuffer = [];
   static const int sequenceLength = 30;
-  static const int featureSize = 63;
+  static const int featureSize = 63;  // 21 landmarks × x,y,z
   static const double confidenceThreshold = 0.65;
 
   Future<bool> loadModel() async {
     try {
-      // Load TFLite model
       _interpreter = await Interpreter.fromAsset(
         'assets/models/action_model.tflite',
       );
 
-      // Load action labels
       final labelsJson = await rootBundle.loadString(
         'assets/models/action_labels.json',
       );
       _actionLabels = json.decode(labelsJson);
 
-      // Load step mapping
       final stepJson = await rootBundle.loadString(
         'assets/models/step_mapping.json',
       );
       _stepMapping = json.decode(stepJson);
 
-      // Load component mapping
       final compJson = await rootBundle.loadString(
         'assets/models/component_mapping.json',
       );
       _componentMapping = json.decode(compJson);
 
       _isLoaded = true;
-      debugPrint('Action Recognition model loaded!');
-      debugPrint('Actions: ${_actionLabels.length}');
+      debugPrint('Module 2: Action model loaded! '
+          'Actions: ${_actionLabels.length}');
       return true;
     } catch (e) {
-      debugPrint('Error loading action model: $e');
-      _isLoaded = false;
+      debugPrint('Module 2: Error loading model: $e');
       return false;
     }
   }
 
-  // Add a new frame to the buffer
-  // keypoints = 21 hand landmarks × 3 (x,y,z) = 63 values
+  // Add frame keypoints to buffer
   void addFrame(List<double> keypoints) {
     if (keypoints.length != featureSize) return;
-
     _frameBuffer.add(keypoints);
-
-    // Keep only last 30 frames
     if (_frameBuffer.length > sequenceLength) {
       _frameBuffer.removeAt(0);
     }
   }
 
-  // Add empty frame when no hand detected
-  void addEmptyFrame() {
-    addFrame(List.filled(featureSize, 0.0));
-  }
+  void addEmptyFrame() =>
+      addFrame(List.filled(featureSize, 0.0));
 
-  // Run action recognition on current buffer
+  // MODULE 2 MAIN FUNCTION
+  // Recognizes student action from component context
   ActionResult? recognizeAction(String currentComponent) {
     if (!_isLoaded || _interpreter == null) return null;
     if (_frameBuffer.length < sequenceLength) return null;
 
     try {
-      // Build input tensor [1, 30, 63]
+      // Build input [1, 30, 63]
       final input = [_frameBuffer.map((f) => f).toList()];
-
-      // Output tensor [1, 42]
       final output = List.filled(42, 0.0).reshape([1, 42]);
 
-      // Run inference
       _interpreter!.run(input, output);
-
       final scores = List<double>.from(output[0]);
 
       // Find best prediction
@@ -101,9 +97,8 @@ class ActionRecognitionService {
 
       if (maxScore < confidenceThreshold) return null;
 
-      final actionName = _actionLabels[maxIndex.toString()] ?? 'unknown';
-
-      // Check if action belongs to current component
+      final actionName =
+          _actionLabels[maxIndex.toString()] ?? 'unknown';
       final stepInfo = _stepMapping[actionName];
       if (stepInfo == null) return null;
 
@@ -118,22 +113,18 @@ class ActionRecognitionService {
         confidence: maxScore,
       );
     } catch (e) {
-      debugPrint('Action recognition error: $e');
+      debugPrint('Module 2: Recognition error: $e');
       return null;
     }
   }
 
-  // Get all actions for a component in order
   List<String> getActionsForComponent(String component) {
     final actions = _componentMapping[component];
     if (actions == null) return [];
     return List<String>.from(actions);
   }
 
-  // Clear the frame buffer
-  void clearBuffer() {
-    _frameBuffer.clear();
-  }
+  void clearBuffer() => _frameBuffer.clear();
 
   void dispose() {
     _interpreter?.close();
@@ -141,11 +132,12 @@ class ActionRecognitionService {
   }
 }
 
+// OUTPUT of Module 2 → sent to Module 3
 class ActionResult {
   final String actionName;
   final String component;
-  final int stepNumber;
-  final int totalSteps;
+  final int stepNumber;   // Current step being performed
+  final int totalSteps;   // Total steps in this task
   final double confidence;
 
   ActionResult({
@@ -158,15 +150,15 @@ class ActionResult {
 
   String get confidencePercent =>
       '${(confidence * 100).toStringAsFixed(0)}%';
-
-  String get displayName =>
-      actionName.replaceAll('_', ' ').replaceAll(
-          RegExp(r'^[A-Z]{2}_\d{2}_'), '');
-
   bool get isReliable => confidence >= 0.75;
 
-  @override
-  String toString() =>
-      'Action: $actionName | Step: $stepNumber | '
-      'Confidence: $confidencePercent';
+  // Output sent to Module 3
+  Map<String, dynamic> toTaskId() => {
+    'task_id': '${component}_task',
+    'component_id': component,
+    'current_step': stepNumber,
+    'total_steps': totalSteps,
+    'action_detected': actionName,
+    'confidence': confidence,
+  };
 }

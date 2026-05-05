@@ -25,10 +25,10 @@ class TaskDetailScreen extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppTheme.danger.withOpacity(0.07),
+                  color: AppTheme.danger.withAlpha(((0.07) * 255).round()),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                      color: AppTheme.danger.withOpacity(0.3)),
+                      color: AppTheme.danger.withAlpha(((0.3) * 255).round())),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,7 +113,7 @@ class _InfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withAlpha(((0.08) * 255).round()),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(

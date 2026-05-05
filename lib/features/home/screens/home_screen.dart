@@ -32,7 +32,7 @@ class HomeScreen extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.25),
+                color: Colors.white.withAlpha(((0.25) * 255).round()),
                 shape: BoxShape.circle,
               ),
               child: Center(
@@ -51,28 +51,29 @@ class HomeScreen extends StatelessWidget {
             onPressed: () async {
               final confirm = await showDialog<bool>(
                 context: context,
-                builder: (_) => AlertDialog(
+                builder: (dialogContext) => AlertDialog(
                   title: const Text('Sign Out'),
                   content: const Text(
                       'Are you sure you want to sign out?'),
                   actions: [
                     TextButton(
                       onPressed: () =>
-                          Navigator.pop(context, false),
+                          Navigator.pop(dialogContext, false),
                       child: const Text('Cancel'),
                     ),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.danger),
                       onPressed: () =>
-                          Navigator.pop(context, true),
+                          Navigator.pop(dialogContext, true),
                       child: const Text('Sign Out'),
                     ),
                   ],
                 ),
               );
-              if (confirm == true && context.mounted) {
+              if (confirm == true) {
                 await FirebaseAuth.instance.signOut();
+                if (!context.mounted) return;
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(
@@ -162,7 +163,7 @@ class _TaskCard extends StatelessWidget {
             Container(
               width: 48, height: 48,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
+                color: color.withAlpha(((0.12) * 255).round()),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
@@ -198,7 +199,7 @@ class _TaskCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: _difficultyColor.withOpacity(0.1),
+                    color: _difficultyColor.withAlpha(((0.1) * 255).round()),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(task['difficulty'],

@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 
@@ -15,7 +14,7 @@ class HandKeypointService {
     // MediaPipe initialization would go here
     // For now we mark as initialized
     _isInitialized = true;
-    print('Hand keypoint service initialized');
+    debugPrint('Hand keypoint service initialized');
   }
 
   // Extract 21 hand landmark coordinates from camera frame
@@ -34,7 +33,7 @@ class HandKeypointService {
       // For now: extract basic motion features from image
       return _extractBasicFeatures(bytes, image.width, image.height);
     } catch (e) {
-      print('Keypoint extraction error: $e');
+      debugPrint('Keypoint extraction error: $e');
       return null;
     }
   }

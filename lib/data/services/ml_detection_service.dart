@@ -38,10 +38,10 @@ class MLDetectionService {
       );
       _labeler = ImageLabeler(options: options);
       _isLoaded = true;
-      print('ML Kit loaded successfully');
+      debugPrint('ML Kit loaded successfully');
       return true;
     } catch (e) {
-      print('Error loading ML Kit: $e');
+      debugPrint('Error loading ML Kit: $e');
       return false;
     }
   }
@@ -78,7 +78,7 @@ class MLDetectionService {
         confidence: labels.first.confidence,
       );
     } catch (e) {
-      print('Detection error: $e');
+      debugPrint('Detection error: $e');
       return null;
     }
   }
@@ -106,7 +106,7 @@ class MLDetectionService {
         ),
       );
     } catch (e) {
-      print('InputImage build error: $e');
+      debugPrint('InputImage build error: $e');
       return null;
     }
   }

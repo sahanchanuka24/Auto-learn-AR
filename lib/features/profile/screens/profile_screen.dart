@@ -40,7 +40,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
       }
     } catch (e) {
-      print('Error loading user data: $e');
+      debugPrint('Error loading user data: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -127,7 +127,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       CircleAvatar(
                         radius: 60,
                         backgroundColor:
-                            AppTheme.primary.withOpacity(0.1),
+                            AppTheme.primary.withAlpha(((0.1) * 255).round()),
                         backgroundImage: _pickedImage != null
                             ? FileImage(_pickedImage!)
                             : null,
@@ -287,7 +287,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppTheme.primary.withOpacity(0.06),
+                      color: AppTheme.primary.withAlpha(((0.06) * 255).round()),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Row(
@@ -333,7 +333,7 @@ class _StatCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withAlpha(((0.08) * 255).round()),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(children: [

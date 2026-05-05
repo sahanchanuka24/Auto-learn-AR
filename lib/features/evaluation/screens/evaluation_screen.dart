@@ -24,7 +24,6 @@ class EvaluationScreen extends StatefulWidget {
 
 class _EvaluationScreenState extends State<EvaluationScreen> {
   bool _isSaving = true;
-  bool _saved = false;
 
   double get _score =>
       (widget.completedSteps / widget.totalSteps) * 100;
@@ -80,7 +79,6 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
     if (mounted) {
       setState(() {
         _isSaving = false;
-        _saved = true;
       });
     }
   }
@@ -105,7 +103,7 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
+                  color: Colors.orange.withAlpha(((0.1) * 255).round()),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Row(
@@ -130,7 +128,7 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: AppTheme.success.withOpacity(0.1),
+                  color: AppTheme.success.withAlpha(((0.1) * 255).round()),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Row(
@@ -154,7 +152,7 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
               width: 150, height: 150,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: _scoreColor.withOpacity(0.1),
+                color: _scoreColor.withAlpha(((0.1) * 255).round()),
                 border: Border.all(
                     color: _scoreColor, width: 4),
               ),
@@ -223,10 +221,10 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppTheme.danger.withOpacity(0.06),
+                  color: AppTheme.danger.withAlpha(((0.06) * 255).round()),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                      color: AppTheme.danger.withOpacity(0.2)),
+                      color: AppTheme.danger.withAlpha(((0.2) * 255).round())),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,7 +262,7 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.06),
+                color: color.withAlpha(((0.06) * 255).round()),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Column(
@@ -382,7 +380,7 @@ class _StatCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withAlpha(((0.08) * 255).round()),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(children: [

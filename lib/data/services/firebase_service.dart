@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import "package:flutter/foundation.dart";
 class FirebaseService {
   static final FirebaseFirestore _db = FirebaseFirestore.instance;
   static final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -46,9 +47,9 @@ class FirebaseService {
         'lastActivity': FieldValue.serverTimestamp(),
       });
 
-      print('Task result saved successfully');
+      debugPrint('Task result saved successfully');
     } catch (e) {
-      print('Error saving task result: $e');
+      debugPrint('Error saving task result: $e');
     }
   }
 
@@ -68,7 +69,7 @@ class FirebaseService {
           .map((doc) => {...doc.data(), 'id': doc.id})
           .toList();
     } catch (e) {
-      print('Error getting results: $e');
+      debugPrint('Error getting results: $e');
       return [];
     }
   }
@@ -81,7 +82,7 @@ class FirebaseService {
       final doc = await _db.collection('users').doc(_uid).get();
       return doc.data();
     } catch (e) {
-      print('Error getting profile: $e');
+      debugPrint('Error getting profile: $e');
       return null;
     }
   }

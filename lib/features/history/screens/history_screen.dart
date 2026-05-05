@@ -81,7 +81,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         children: [
           Icon(Icons.history,
               size: 80,
-              color: AppTheme.textSecondary.withOpacity(0.3)),
+              color: AppTheme.textSecondary.withAlpha(((0.3) * 255).round())),
           const SizedBox(height: 16),
           const Text('No results yet',
               style: TextStyle(
@@ -161,7 +161,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   width: 52, height: 52,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: color.withOpacity(0.1),
+                    color: color.withAlpha(((0.1) * 255).round()),
                     border: Border.all(color: color, width: 2),
                   ),
                   child: Center(
@@ -209,7 +209,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
+                    color: color.withAlpha(((0.1) * 255).round()),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(

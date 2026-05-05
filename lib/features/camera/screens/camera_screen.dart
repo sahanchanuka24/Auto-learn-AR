@@ -242,7 +242,7 @@ class _CameraScreenState extends State<CameraScreen> {
             Container(
               width: 70, height: 70,
               decoration: BoxDecoration(
-                color: AppTheme.success.withOpacity(0.1),
+                color: AppTheme.success.withAlpha(((0.1) * 255).round()),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.check_circle,
@@ -374,7 +374,7 @@ class _CameraScreenState extends State<CameraScreen> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withOpacity(0.85),
+                  Colors.black.withAlpha(((0.85) * 255).round()),
                   Colors.transparent,
                 ],
               ),
@@ -439,7 +439,7 @@ class _CameraScreenState extends State<CameraScreen> {
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: _audioEnabled
-                          ? taskColor.withOpacity(0.8)
+                          ? taskColor.withAlpha(((0.8) * 255).round())
                           : Colors.black45,
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -488,8 +488,8 @@ class _CameraScreenState extends State<CameraScreen> {
                       horizontal: 14, vertical: 7),
                   decoration: BoxDecoration(
                     color: _componentMatched
-                        ? AppTheme.success.withOpacity(0.9)
-                        : Colors.black.withOpacity(0.65),
+                        ? AppTheme.success.withAlpha(((0.9) * 255).round())
+                        : Colors.black.withAlpha(((0.65) * 255).round()),
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
                       color: _componentMatched
@@ -530,8 +530,8 @@ class _CameraScreenState extends State<CameraScreen> {
                         horizontal: 14, vertical: 7),
                     decoration: BoxDecoration(
                       color: _currentAction != null
-                          ? Colors.purple.withOpacity(0.8)
-                          : Colors.black.withOpacity(0.5),
+                          ? Colors.purple.withAlpha(((0.8) * 255).round())
+                          : Colors.black.withAlpha(((0.5) * 255).round()),
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
                         color: _currentAction != null
@@ -587,7 +587,7 @@ class _CameraScreenState extends State<CameraScreen> {
                         horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: _componentMatched
-                          ? AppTheme.success.withOpacity(0.85)
+                          ? AppTheme.success.withAlpha(((0.85) * 255).round())
                           : Colors.black54,
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -664,7 +664,7 @@ class _CameraScreenState extends State<CameraScreen> {
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
                 colors: [
-                  Colors.black.withOpacity(0.92),
+                  Colors.black.withAlpha(((0.92) * 255).round()),
                   Colors.transparent,
                 ],
               ),
@@ -725,7 +725,7 @@ class _CameraScreenState extends State<CameraScreen> {
                     color: Colors.black54,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                        color: taskColor.withOpacity(0.5)),
+                        color: taskColor.withAlpha(((0.5) * 255).round())),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -749,7 +749,7 @@ class _CameraScreenState extends State<CameraScreen> {
                                       vertical: 2),
                               decoration: BoxDecoration(
                                 color: Colors.purple
-                                    .withOpacity(0.3),
+                                    .withAlpha(((0.3) * 255).round()),
                                 borderRadius:
                                     BorderRadius.circular(10),
                               ),
@@ -874,8 +874,8 @@ class _AiStatusBadge extends StatelessWidget {
             horizontal: 6, vertical: 3),
         decoration: BoxDecoration(
           color: isOn
-              ? Colors.green.withOpacity(0.3)
-              : Colors.orange.withOpacity(0.3),
+              ? Colors.green.withAlpha(((0.3) * 255).round())
+              : Colors.orange.withAlpha(((0.3) * 255).round()),
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
             color: isOn ? Colors.greenAccent : Colors.orange,

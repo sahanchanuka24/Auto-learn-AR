@@ -9,7 +9,6 @@
 // ================================================================
 
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
 
 // AR Overlay data model
 class AROverlay {
@@ -264,7 +263,7 @@ class AROverlayPainter extends CustomPainter {
     );
     canvas.drawRRect(
       bgRect,
-      Paint()..color = overlay.color.withOpacity(0.8),
+      Paint()..color = overlay.color.withAlpha(((0.8) * 255).round()),
     );
 
     textPainter.paint(
@@ -279,8 +278,7 @@ class AROverlayPainter extends CustomPainter {
   void _drawHighlight(Canvas canvas, Offset pos,
       AROverlay overlay, Size size) {
     final paint = Paint()
-      ..color = overlay.color.withOpacity(
-          0.3 + animationValue * 0.2)
+      ..color = overlay.color.withAlpha(((0.3 + animationValue * 0.2) * 255).round())
       ..style = PaintingStyle.fill;
 
     canvas.drawCircle(pos, 30 + animationValue * 5, paint);
@@ -299,7 +297,7 @@ class AROverlayPainter extends CustomPainter {
   void _drawWarning(Canvas canvas, Offset pos,
       AROverlay overlay) {
     final paint = Paint()
-      ..color = Colors.red.withOpacity(0.9)
+      ..color = Colors.red.withAlpha(((0.9) * 255).round())
       ..style = PaintingStyle.fill;
 
     final path = Path()
@@ -347,8 +345,7 @@ class AROverlayPainter extends CustomPainter {
 
   void _drawScanningFrame(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.blue.withOpacity(
-          0.5 + animationValue * 0.3)
+      ..color = Colors.blue.withAlpha(((0.5 + animationValue * 0.3) * 255).round())
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 
@@ -369,9 +366,9 @@ class AROverlayPainter extends CustomPainter {
     ];
 
     for (final corner in corners) {
-      final origin = corner[0] as Offset;
-      final hDir = corner[1] as Offset;
-      final vDir = corner[2] as Offset;
+      final origin = corner[0];
+      final hDir = corner[1];
+      final vDir = corner[2];
 
       canvas.drawLine(
         origin,

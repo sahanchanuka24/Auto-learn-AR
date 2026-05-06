@@ -298,7 +298,6 @@ class EvaluationReport {
   // Output saved to Firebase
   Map<String, dynamic> toFirestore() => {
     'component': component,
-    'project': 'Maruti Suzuki Alto 800L',
     'taskId': taskId,
     'score': score,
     'grade': grade,
